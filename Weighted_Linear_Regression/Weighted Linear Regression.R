@@ -1,0 +1,48 @@
+#' ---
+#' title: "Advanced Stats Assignment4"
+#' output: html_document
+#' date: "2023-02-27"
+#' ---
+#' 
+## ----setup, include=FALSE--------------------------------------------------------------------------------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR2)
+library(pls)
+library(dplyr)
+library(glmnet)
+library(faraway)
+
+#' 
+#' ### Question 4 Weighted Linear Regression
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Data Overview
+head(pipeline)
+
+# Required Computation
+i <- order(pipeline$Field)
+npipe <- pipeline[i,] # reorder
+ff <- gl(12,9)[-108]
+meanfield <- unlist(lapply(split(npipe$Field,ff),mean))
+varlab <- unlist(lapply(split(npipe$Lab,ff),var))
+
+# log-log tranformation
+meanfield_log <- log(meanfield[-12])
+varlab_log <- log(varlab[-12])
+
+# Fit a model
+model <- lm(varlab_log ~ meanfield_log)
+summary(model)
+
+# Compute weights
+a0 <- exp(coef(model)[1])
+a1 <- coef(model)[2]
+pipeline <- pipeline[0:106,]
+weights <- rep(0, nrow(pipeline))
+weights[ff] <- 1/(a0 * meanfield^a1)
+
+# Fit a WLS regression model 
+fit_wls <- lm(Lab ~ Field, data = pipeline, weights = weights)
+summary(fit_wls)
+
+
