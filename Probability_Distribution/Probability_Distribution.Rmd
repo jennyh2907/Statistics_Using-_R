@@ -1,0 +1,379 @@
+---
+title: "HW2_FOA"
+output: html_document
+date: "2022-08-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+```
+
+### Question1
+
+#### Question1(a)
+
+```{r }
+# Create a vector for wheel and probability
+wheel <- c(0:1000)
+p <-rep(c(1/1000), times=1000)
+
+# Find the theoretical mean and std 
+theo_mean <- mean(wheel)
+theo_var <- sum((wheel - theo_mean)^2)/1000
+theo_sd <- sqrt(theo_var)
+
+# Print out the result
+sprintf("The theoretical mean of the winnings is %.3f. The theoretical std is %.3f.", theo_mean, theo_sd)
+```
+
+#### Question1(b), (c), (d), (e), (f), (g), (j)
+
+```{r }
+# Building the Sampling Distribution
+set.seed(50)
+
+# Use loop to simulate spins from 1 to 10
+tab <- matrix(nrow = 5, ncol=10, byrow=TRUE)
+i<-1
+for(i in 1:10) {
+ nam <- paste0("rep_spin_", i, sep = "")
+ nam <- replicate(1000, {
+    samp <- sample(wheel, i, replace = TRUE)})
+ matrix_spin <- matrix(nam, nrow = i)
+ matrix_spin <- t(matrix_spin)
+ samp_means <- rowMeans(matrix_spin)
+ matrix_spin <- cbind(matrix_spin, samp_means)
+ prob_600 <- sum(samp_means > 600)/1000*100
+ sm_average <- mean(samp_means)
+ sm_sd <- sd(samp_means)
+ print(paste0("The mean of sample mean for ", i, " spin is ", sm_average))
+ print(paste0("The std of sample mean for ", i, " spin is ", sm_sd))
+ print(paste0("The theoretical standard error for ", i, " spin is ", theo_sd/sqrt(1000*i)))
+ print(paste0("The probability of winning more than $600 for ", i, " spin is ", prob_600, "%"))
+ print(paste0("Replication containing ", i, " spin"))
+ print(matrix_spin)
+ hist(samp_means, main = paste0("Histogram of ", i, " spin"))
+ tab[1, i] = theo_mean
+ tab[2, i] = sm_average
+ tab[3, i] = theo_sd/sqrt(1000*i)
+ tab[4, i] = sm_sd
+ tab[5, i] = prob_600
+}
+```
+
+#### Question1(h)
+
+The mean of sample means are all close to theoretical mean.
+
+#### Question1(i)
+
+The difference between theoretical standard error and std of sample mean is getting closer and closer as the number of spins in simulation increases.
+
+#### Question1(j)
+
+
+```{r }
+#define column names and row names of matrix
+colnames(tab) <- c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10')
+rownames(tab) <- c('Theoretical Mean', 'Mean of Sample Means', 'Theoretical Standard Error', 'Standard Deviation of Sample Means', 'P(winning > $600)')
+
+tab
+```
+
+### Question2
+
+#### Question2(a)
+
+Because different product family might account for different proportion for sale, therefore result in different mean of revenue, so it makes sense to use a stratified sample, stratified by product family, to estimate this mean
+
+```{r }
+# Read in the file
+SupermarketTrans <- read_csv("SupermarketTrans.csv", col_types = cols(Revenue = col_number()))
+set.seed(50)
+```
+
+#### Question2(b)
+
+```{r }
+# Find the proportion for each category in product family
+Drink <- SupermarketTrans%>%
+  filter(`Product Family`== "Drink")
+Food <- SupermarketTrans%>%
+  filter(`Product Family`== "Food")
+Non_Consumable <- SupermarketTrans%>%
+  filter(`Product Family`== "Non-Consumable")
+Drink_prop <- nrow(Drink)/nrow(SupermarketTrans)
+Food_prop <- nrow(Food)/nrow(SupermarketTrans)
+Non_Consumable_prop <- nrow(Non_Consumable)/nrow(SupermarketTrans)
+
+# Print out the result
+sprintf("If the total sample size be 250, we should sample %.f from drink, %.f from food, %.f from Non-consumable", 250*Drink_prop, 250*Food_prop, 250*Non_Consumable_prop)
+```
+
+#### Question2(c)
+
+```{r }
+# Sampling
+Drink_sample <- sample_n(Drink, 22)
+Food_sample <- sample_n(Food, 181)
+Non_Consumable_sample <- sample_n(Non_Consumable, 47)
+Sample_mean_drink <- mean(Drink_sample$Revenue)
+Sample_mean_food <- mean(Food_sample$Revenue)
+Sample_mean_non_consumable <- mean(Non_Consumable_sample$Revenue)
+sd_drink <- sd(Drink_sample$Revenue)
+sd_food <- sd(Food_sample$Revenue)
+sd_non_consumable <- sd(Non_Consumable_sample$Revenue)
+
+# Print out the result
+sprintf("The individual sample means from drink is %.f, from food is %.f, from non-consumable is %.f", Sample_mean_drink, Sample_mean_food, Sample_mean_non_consumable)
+sprintf("The sample standard deviations from drink is %.f, from food is %.f, from non-consumable is %.f", sd_drink, sd_food, sd_non_consumable)
+```
+
+### Question3
+
+#### Question3(a)
+
+According to the confidence interval, we might be 95 percent confident that the interval between 17.087 and 19.129 contains the true population mean. So the billing system was effective.
+
+```{r }
+#Read in the file
+PaymentTimes <- read_csv("PaymentTimes.csv")
+
+#Sample mean, sample size, population std
+x_bar <- mean(PaymentTimes$PayTime)
+n <- 65
+sigma <- 4.2
+
+#Z score for 95% confidence
+z95 <- qnorm(0.975, mean = 0, sd = 1, lower.tail = TRUE)
+
+#95% CI
+l95 <- x_bar - (z95*sigma/sqrt(n))
+r95 <- x_bar + (z95*sigma/sqrt(n))
+
+l95_rounded <- round(l95, digits = 3)
+r95_rounded <- round(r95, digits = 3)
+
+#Display 95% CI
+sprintf("95 percent CI: (%s, %s)", l95_rounded, r95_rounded)
+```
+
+#### Question3(b)
+
+According to the confidence interval, we might be 99 percent confident that the interval between 16.766 and 19.45 contains the true population mean. So the billing system was effective.
+
+```{r }
+# Z score for 99% confidence
+z99 <- qnorm(0.995, mean = 0, sd = 1, lower.tail = TRUE)
+
+# 99% CI
+l99 <- x_bar - (z99*sigma/sqrt(n))
+r99 <- x_bar + (z99*sigma/sqrt(n))
+
+l99_rounded <- round(l99, digits = 3)
+r99_rounded <- round(r99, digits = 3)
+
+# Display 99% CI
+sprintf("99 percent CI: (%s, %s)", l99_rounded, r99_rounded)
+```
+
+#### Question3(c)
+
+```{r }
+Prob_pay <- pnorm(18.1077, 19.5, 4.2)
+
+# Print out the result
+sprintf("The probability of observing a sample mean payment time of 65 invoices less than 18.1077 days is %.3f", Prob_pay)
+```
+
+### Question4
+
+```{r}
+prob_car <- pexp(3, 1/2.7)
+
+#Print out the result
+sprintf("The proportion of cars can get through the toll booth in less than 3 minutes is %.3f", prob_car)
+```
+
+### Question5
+
+```{r}
+prob_swim <- pnorm(60, 62, 2)
+answer <- choose(5, 2)*((prob_swim^2)*((1-prob_swim))^3)
+
+#Print out the result
+sprintf("The probability that she will swim under a minute exactly twice in next five race is %.3f", answer)
+```
+
+### Question6
+
+#### Question6(a)
+
+```{r}
+return_size <- 25
+charity <- 5
+Audit <- 4
+prob_audit_charity <- dhyper(1, 5, 20, 4)
+
+#Print out the result
+sprintf("The probability exactly one of the four audited had a charitable deduction of more than $1,000 is %.3f", prob_audit_charity)
+```
+
+#### Question6(b)
+
+```{r}
+prob_audit_no_charity <- 1 - phyper(0, 5, 20, 4)
+
+#Print out the result
+sprintf("The probability at least one of the audited returns had a charitable contribution of more than $1,000 is %.3f", prob_audit_no_charity)
+```
+
+### Question7
+
+#### Question7(a)
+
+```{r}
+no_benz <- dpois(0, 3)
+
+#Print out the result
+sprintf("The probability that no Mercedes is sold on a particular day is %.3f", no_benz)
+```
+
+#### Question7(b)
+
+```{r}
+At_least_one_benz <- (1-no_benz)^5
+sprintf("The probability that for five consecutive days at least one Mercedes is sold is %.3f", At_least_one_benz)
+```
+
+### Question8
+
+#### Question8(a)
+
+```{r}
+median <- qexp(0.5, 0.5)
+
+sprintf("The median waiting time until the next alarm is %.3f", median)
+```
+
+#### Question8(b)
+
+```{r}
+first_quartile <- qexp(0.25, 0.5)
+
+sprintf("The first quartile of waiting time before the next alarm is %.3f", first_quartile)
+```
+
+#### Question8(c)
+
+```{r}
+thirty_quartile <- qexp(0.3, 0.5)
+
+sprintf("The 30th percentile of waiting time until the next alarm is %.3f", thirty_quartile)
+```
+
+### Question9
+
+```{r}
+sample_size <- 150
+first_response <- 1-0.45
+second_response <- 1-0.7
+success_rate <- first_response + (1-first_response)*second_response
+
+#Calculate the probability
+prob_both <- 1-pbinom(109, sample_size, success_rate)
+
+#Print out the result
+sprintf("The probability of getting this required number of returns from both waves is %.3f", prob_both)
+```
+
+### Question10
+
+#### Question10(a)
+
+```{r}
+default <- 0.07
+bad_debt <- 0.8
+charge <- 250/bad_debt
+
+writeoff_250 <- pnorm(charge, 350, 100, lower.tail = FALSE)*default
+
+#Print out the result
+sprintf("The probability that a typical customer in this group will default and produce a write-off of more than $250 in bad debt is %.3f", writeoff_250)
+```
+
+#### Question10(b)
+
+```{r}
+mean_500customer <- 500*writeoff_250
+std_500customer <- sqrt(mean_500customer*(1-writeoff_250))
+
+#Print out the result
+sprintf("The mean is %.3f, and the std is %.3f", mean_500customer, std_500customer)
+```
+
+#### Question10(c)
+
+```{r}
+prob_25 <- 1 - pbinom(24, 500, writeoff_250)
+
+sprintf("The probability that at least 25 of them will meet the description is %.3f", prob_25)
+```
+
+### Question11
+
+#### Question11(a)
+
+```{r}
+mean_toy <- 20000
+
+#Find out the z value for 95% CI
+z95 <- qnorm(0.975, mean = 0, sd = 1, lower.tail = TRUE)
+
+#Calculate std
+sd_toy <-(30000-mean_toy)/z95
+
+#Print out the result
+sprintf("Question11(a)")
+sprintf("The mean is %.f, and the standard deviation is %.3f", mean_toy, sd_toy)
+```
+
+#### Question11(b)
+
+```{r}
+#Question(b)
+p_15000 <- 1 - pnorm(15000, mean_toy, sd_toy)
+p_18000 <- 1 - pnorm(18000, mean_toy, sd_toy)
+p_24000 <- 1 - pnorm(24000, mean_toy, sd_toy)
+p_28000 <- 1 - pnorm(28000, mean_toy, sd_toy)
+
+sprintf("The probability of stock-outs for order quantity 15,000 is %.3f, for 18,000 is %.3f, for 24,000 is %.3f, for 28000 is %.3f", p_15000, p_18000, p_24000, p_28000 )
+```
+
+#### Question11(c)
+
+```{r}
+knitr::include_graphics("HW2_FOA_Q11c.png")
+```
+
+#### Question11(d)
+
+```{r}
+toy <- qnorm(0.7, mean_toy, sd_toy)
+toy_rounded <- round(toy, digits = 0)
+
+#Pessimistic
+Pessimistic <- 10000*24+5*(toy_rounded-10000)-16*toy_rounded
+
+#Likely
+Likely<- 20000*24+5*(toy_rounded-20000)-16*toy_rounded
+
+#Optimistic
+Optimistic<- toy_rounded*24-16*toy_rounded
+
+sprintf("The manager should order %.f teddies", toy)
+sprintf("Under pessimistic scenario, the profit is %.f. Under likely scenario, the profit is %.f. Under optimistic scenario, the profit is %.f", Pessimistic, Likely, Optimistic)
+
+```
