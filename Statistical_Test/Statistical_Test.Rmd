@@ -1,0 +1,1220 @@
+---
+title: "Stats Reasoning_HW4_Ching-Wen(Jenny)Huang"
+output: html_document
+date: "2022-12-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(reshape2)
+library(dplyr)
+library(PASWR2)
+library(lmtest)
+library(sandwich)
+```
+
+### Question 1
+
+#### Question1(a)
+
+Objective: Determine if those who say will return rate each question higher
+
+Type of Data: Ordinal
+
+Types of Samples: Independent
+
+Definition of Populations: Denotes ratings of those who say will not return as sample 1, those who say will return as sample 2
+
+Hypotheses:
+
+$H_0$: The two population locations are the same
+
+$H_1$: The location of population 1 is to the left of the location of population 2
+
+Decision: Perform Wilcoxon Rank Sum Test. For questions about quality, fairness and checkout, since the p-value of Wilcoxon Rank Sum Test is smaller than any reasonable significance level, we have overwhelming evidence to reject $H_0$. However, for question about guarantee, the p-value is larger than any reasonable significance level, we can not reject $H_0$
+
+Interpretation: There appears to be sufficient evidence to indicate that those customers who say will return rate question about quality, fairness and checkout significantly higher than those who say will not return. There is no sufficient evidence to infer that those customers who say will return rate question about guarantee significantly higher than those who say will not return
+
+```{r}
+# Read in the data
+Rating <- read_csv("Automobile Service Center Ratings.csv")
+
+# Save the values
+quality <- as.integer(Rating$Quality)
+fair <- as.integer(Rating$Fairness)
+guarantee <- as.integer(Rating$Guarantee)
+checkout <- as.integer(Rating$Checkout)
+return <- as.factor(Rating$Return)
+
+# Run the test
+wilcox.test(quality ~ return, alt = "less", paired = FALSE, exact = FALSE, conf.level = 0.95)
+wilcox.test(fair ~ return, alt = "less", paired = FALSE, exact = FALSE, conf.level = 0.95)
+wilcox.test(guarantee ~ return, alt = "less", paired = FALSE, exact = FALSE, conf.level = 0.95)
+wilcox.test(checkout ~ return, alt = "less", paired = FALSE, exact = FALSE, conf.level = 0.95)
+
+```
+
+#### Question1(b)
+
+Objective: Determine if there is a difference in ratings between those customers who make positive comments, negative comments or make no comment
+
+Type of Data: Ordinal
+
+Types of Samples: Independent
+
+Definition of Populations: Denotes population 1 (those who make positive comments), population 2 (those who make no comments) and population 3(those who make negative comments).
+
+Hypotheses:
+
+$H_0$: The locations of all three populations are the same
+
+$H_1$:At least two populations differ
+
+Decision: Perform Kruskal-Wallis Test. For questions about quality and checkout, since the p-value of Kruskal-Wallis Test is smaller than 0.05, we have sufficient evidence to reject $H_0$. However, for questions about fairness and guarantee, the p-value is larger than any significance level, we can not reject $H_0$.
+
+Interpretation: There appears to be sufficient evidence to indicate there is a significant difference in ratings of quality and checkout between those customers who make positive comments, negative comments or make no comment. There is no sufficient evidence to infer that there is a significant difference in ratings of fairness and guarantee between those customers who make positive comments, negative comments or make no comment.
+
+```{r}
+# Save the values
+comment <- Rating$Comment
+
+# Run the test
+kruskal.test(quality ~ comment)
+kruskal.test(fair ~ comment)
+kruskal.test(guarantee ~ comment)
+kruskal.test(checkout ~ comment)
+```
+
+### Question 2
+
+Objective: Determine if there is a difference in the ratings of the three recipes.
+
+Type of Data: Ordinal
+
+Types of Samples: Block Design
+
+Definition of Populations: Denote population 1(original recipe), population 2(new recipe 1) and population 3(new recipe 2)
+
+Hypotheses:
+
+$H_0$: The locations of all three populations are the same
+
+$H_1$: At least two population locations differ
+
+Decision: Perform Friedman Test. Since the p-value of FriedMan Test is smaller than any reasonable significance level, we have overwhelming evidence to reject $H_0$. 
+
+Interpretation: There appears to be sufficient evidence to indicate that the ratings of the three recipes significantly differ.
+
+```{r}
+# Read in the data
+drink <- read_csv("Soft Drink Recipe.csv")
+
+# Stack the data
+drink_stacked <- melt(drink, id.var = "Person", variable.name = "Type")
+
+# Save the values
+Person <- factor(drink_stacked$Person)
+Type <- factor(drink_stacked$Type)
+Value <- drink_stacked$value
+
+# Run the test
+friedman.test(Value, Person, Type)
+```
+
+### Question 3
+
+Objective: Determine if works longer hours reduce the chance of losing job.
+
+Type of Data: Interval and Ordinal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote working hours(HRS1) as a and chance of losing job(JOBLOSE) as b
+
+Hypotheses:
+
+$H_0: \rho_s = 0$
+
+$H_1: \rho_s \neq 0$
+
+Decision: Run Spearman Rank Correlation. Since the p-value of Spearman Rank Correlation Test is smaller than any reasonable significance level, we have overwhelming evidence to reject $H_0$
+
+Interpretation: There appears to be sufficient evidence to indicate that there is a correlation between working hour and chance to not lose the job. Based on the value of $\rho$, there is a positive correlation exixts, means that the longer one works, the less likely one loses his job.
+
+```{r}
+# Read in the data
+job <- read_csv("Job Loss.csv")
+
+#Clean the data
+job_wona <- na.omit(job) 
+
+# Run the test
+cor.test(x = job_wona$HRS1, y = job_wona$JOBLOSE, method = "spearman")
+```
+
+### Question 4
+
+Objective: Determine if the European Brand is preferred by customers than domestic brand
+
+Type of Data: Ordinal
+
+Types of Samples: Matched Pairs
+
+Definition of Populations: Population 1(European Brand), Population 2(Domestic Brand)
+
+Hypotheses:
+
+$H_0$: The two population locations are the same
+
+$H_1$: The location of population 1 is to the right of the location of population 2
+
+Decision: Run Sign Test. Since the p-value of Sign Test is smaller than any reasonable significance level, we have overwhelming evidence to reject $H_0$
+
+Interpretation: There appears to be sufficient evidence to indicate that the European Brand is preferred by customers than domestic brand
+
+```{r}
+# Read in the data
+ice <- read_csv("Ice Cream Comparison.csv")
+
+# Run the test
+SIGN.test(x = ice$European, y = ice$Domestic, alternative = "greater", conf.level = 0.9)
+```
+
+### Question 5
+
+Objective: Determine if one machine is faster than the other
+
+Type of Data: Interval
+
+Types of Samples: Matched Pairs
+
+Definition of Populations: Let population 1 be the cutting time of Machine 1, and population 2 be the cutting time of Machine 2
+
+Hypotheses:
+
+$H_0$: The two population locations are the same
+
+$H_1$: The location of population 1 is on the left of population 2.
+
+Decision: Run Wilcox Signed Rank Sum Test. Since the p-value of Wilcox Signed Rank Sum Test is smaller than any reasonable significance level, we have overwhelming evidence to reject $H_0$
+
+Interpretation: There appears to be sufficient evidence to indicate that the cutting time Machine 1 takes is significantly less than Machine 2. Therefore, the locksmith should purchase Machine 1.
+
+```{r}
+# Read in the data
+machine <- read_csv("Machine Selection.csv")
+
+# Compute the differences 
+Diff <- machine %>% 
+  mutate(diff = `Machine 1` - `Machine 2`) %>%
+  pull(diff)
+
+# Plot the histogram and check the normality
+hist(Diff)
+
+# Subset
+Machine <- machine %>% select(`Machine 1`, `Machine 2`)
+Machine_stacked <- stack(Machine)
+names(Machine_stacked) <- c("Time", "Machine")
+
+# Save values
+time <- Machine_stacked$Time
+type <- Machine_stacked$Machine
+
+# Run the test
+wilcox.test(time ~ type, alt = "two.sided", paired = TRUE, exact = FALSE, conf.level = 0.95)
+wilcox.test(time ~ type, alt = "less", paired = TRUE, exact = FALSE, conf.level = 0.95)
+```
+
+### Question 6
+
+Objective: Determine if a difference exists on the spending average between cardholders who applied for the credit card and cardholders who were contacted by telemarketers or by mail
+
+Type of Data: Interval
+
+Types of Samples: Independent
+
+Definition of Populations: Denote Population 1(cardholders who applied for the credit card) and population 2(cardholders who were contacted by telemarketers or by mail)
+
+Hypotheses:
+
+$H_0$: The two population locations are the same
+
+$H_1$: The location of population 1 is different from the location of population 2
+
+Decision: Perform Wilcox Rank Sum Test. Since the p-value of Wilcox Rank Sum Test is larger than any reasonable significance level, we can not reject $H_0$
+
+Interpretation: There is no sufficient evidence to infer that there is a significant difference in the spending average between cardholders who applied for the credit card and cardholders who were contacted by telemarketers or by mail
+
+```{r}
+# Read in the data
+card <- read_csv("CreditcardHolders.csv")
+
+# Plot the histogram and check for normality
+hist(card$Applied)
+hist(card$Contacted)
+
+# Stack the data
+card_stacked <- stack(card)
+names(card_stacked) <- c("Spending", "Type")
+
+# Save the values
+spending <- as.integer(card_stacked$Spending)
+contact_type <- as.factor(card_stacked$Type)
+
+# Run the test
+wilcox.test(spending ~ contact_type, alt = "two.sided", paired = FALSE, exact = FALSE, conf.level = 0.95)
+```
+
+### Question 7
+
+Objective: Determine if Americans are more deeply in debt this year than last year
+
+Type of Data: Interval
+
+Types of Samples: Matched Pairs
+
+Definition of Populations:Let population 1 be the ratio of debt payment this year and population 2 be the ratio of debt payment last year
+
+Hypotheses: 
+
+$H_0$: The two population locations are the same
+
+$H_1$: The location of population 1 is different from the location of population 2
+
+Decision: Run Wilcox Signed Rank Sum Test. Since the p-value of Wilcox Signed Rank Sum Test is larger than any reasonable significance level, we can not reject $H_0$
+
+Interpretation: There is no sufficient evidence to infer that there is a significant difference in ratio of debt payment between this year and last year.
+
+```{r}
+# Read in the data
+debt <- read_csv("AmericanDebt.csv")
+
+# Compute the differences
+Diff <- debt %>%
+  mutate(diff = `This Year` - `Last Year`) %>%
+  pull(diff)
+
+# Plot the histogram to check normality
+hist(Diff)
+
+# Stack the data
+debt_stacked <- stack(debt)
+names(debt_stacked) <- c("ratio", "time")
+
+# Save values
+Ratio <- debt_stacked$ratio
+Time <- debt_stacked$time
+
+# Run the test
+wilcox.test(Ratio ~ Time, alternative = "two.sided", paired = TRUE, exact = FALSE, conf.level = 0.95)
+```
+
+### Question 8
+
+#### Question8(a)
+
+Original retention rate may varies between East Coast and West Coast. Such difference will become a confounding variable that influence both independent variable and dependent variable.
+
+#### Question8(b)
+
+Objective: Determine if offering health benefits has statistically significantly higher retention to compensate for switching to health benefits
+
+Type of Data: Nominal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote employees at West Coast (with increased health benefit) as population 1 and employees at East Coast(with more vacation days) as population 2 
+
+Hypotheses:
+
+$H_0:p_1\le p_2$
+
+$H_1:p_1 > p_2$
+
+Decision: Run Z test for p1, p2. Since the p-value of Z test is larger than 0.05. At 95% confidence level, we can not reject $H_0$
+
+Interpretation: There is no sufficient evidence to infer that offering health benefits has statistically significantly higher retention to compensate for switching to health benefits.
+
+```{r}
+# Read in the data
+benefit <- read_csv("Benefits Comparison.csv")
+
+# Calculate the values
+health <- benefit %>%
+  filter(Benefit == "Health" & Retention == "1")
+
+vacation <- benefit %>%
+  filter(Benefit == "Vacation" & Retention == "1")
+
+# Run the prop test
+prop.test(c(nrow(health), nrow(vacation)), c(125, 140), alternative = "greater", correct = FALSE)
+
+```
+
+#### Question8(c)
+
+Objective: Determine if there is a statistically significant difference in retention rates between the benefit plans
+
+Type of Data: Nominal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote employees at West Coast (with increased health benefit) as population 1 and employees at East Coast(with more vacation days) as population 2 
+
+Hypotheses:
+
+$H_0:p_1 = p_2$
+
+$H_1:p_1 \neq p_2$
+
+Decision: Run Z test for p1, p2. Since the p-value of Z test is larger than any reasonable significance level, we can not reject $H_0$
+
+Interpretation: There is no sufficient evidence to infer that there is a statistically significant difference in retention rates between the benefit plans
+
+```{r}
+# Run the test
+prop.test(c(nrow(health), nrow(vacation)), c(125, 140), alternative = "two.sided", correct = FALSE)
+```
+
+### Question 9
+
+$H_0:\rho = 0$ (No heteroscedasticity)
+
+$H_0:\rho \neq 0$ (There is heteroscedasticity)
+
+Since the p-value from the test of education variable and absolute value of residual is smaller than any reasonable significance level, there is sufficient evidence to reject $H_0$, and conclude there is heteroscedasticity problem. However, for the test of experience variable and absolute value of residual, the p-value is larger than 0.05. So, at 95% confidence level, there is no sufficient evidence of a systematic relationship between the experience and the absolute value of the residuals, which might suggest that there is no heteroscedasticity between these two variables.
+
+```{r}
+# Read in the data
+wage <- read_csv("Wage.csv")
+
+money <- wage$Wage
+edu <- wage$Educ
+exp <- wage$Exper
+
+# Build the full model
+full <- lm(money ~ edu + exp)
+residual_full <- residuals(full)
+abs_residual_full <- abs(residual_full)
+
+# Edu variable
+cor.test(x = edu, y = abs_residual_full, alternative = "two.sided", method = "spearman", exact = FALSE)
+
+# Exp variable
+cor.test(x = exp, y = abs_residual_full, alternative = "two.sided", method = "spearman", exact = FALSE)
+```
+
+### Question 10
+
+#### Question10(a)
+
+```{r}
+# Read in the data
+compensation <- read_csv("Compensation.csv")
+
+# Average compensation
+avg_com <- as.numeric(compensation[12, 2:10])
+avg_produce <- as.numeric(compensation[14, 2:10])
+
+# Build a regression model
+comp_model <- lm(avg_com ~ avg_produce)
+comp_residual <- residuals(comp_model)
+comp_residual
+```
+
+#### Question10(b)
+
+$H_0: \beta = 0$
+
+$H_1: \beta \neq 0$
+
+Since p-value for the slope is larger than any reasonable significance level, we can not reject $H_0$. And there is no sufficient evidence to claim there is heteroscedasticity.
+
+```{r}
+# Park Test
+comp_residual_square <- comp_residual^2
+log_comp_residual_square <- log(comp_residual_square)
+
+# Build a model
+comp_model2 <- lm(log_comp_residual_square ~ log(avg_produce))
+summary(comp_model2)
+```
+
+#### Question10(c)
+
+$H_0: \beta = 0$
+
+$H_1: \beta \neq 0$
+
+Since the p-values of slope are all larger than any reasonable significance level, we can not reject $H_0$. There is no sufficient evidence to conclude there is heteroscedasticity.
+
+```{r}
+# Obtain values for Glejser Test
+abs_comp_residual <- abs(comp_residual)
+sqrt_avg_produce <- sqrt(avg_produce)
+recip_avg_produce <- 1/avg_produce
+recip_sqrt_avg_produce <- 1/sqrt_avg_produce
+
+# Glejser Test
+comp_model_g1 <- lm(abs_comp_residual ~ avg_produce)
+summary(comp_model_g1)
+
+comp_model_g2 <- lm(abs_comp_residual ~ sqrt_avg_produce)
+summary(comp_model_g2)
+
+comp_model_g3 <- lm(abs_comp_residual ~ recip_avg_produce)
+summary(comp_model_g3)
+
+comp_model_g4 <- lm(abs_comp_residual ~ recip_sqrt_avg_produce)
+summary(comp_model_g4)
+
+```
+
+#### Question10(d)
+
+$H_0: \rho = 0$
+
+$H_1: \rho \neq 0$
+
+Since the p-value is larger than any reasonable significance level, there is no sufficient evidence to conclude there is heteroscedasticity.
+
+```{r}
+# Spearman Rank Correlation Test
+cor.test(x = avg_produce, y = abs_comp_residual, alternative = "two.sided", method = "spearman", exact = FALSE)
+```
+
+### Question 11
+
+Park Test and Glejser Test Hypotheses:
+
+$H_0: \beta=0$
+
+$H_1: \beta \neq 0$
+
+White's Test Hypotheses:
+
+$H_0: All \space\beta=0$
+
+$H_1:$At least one $/beta$ is not 0
+
+Since the p-values of Park and Glejser tests are all larger than any reasonable significance level, we can not reject $H_0$. The result is the same for White's General test since 0.76248(test statistic) < 3.841459(critical value). There is no sufficient evidence to infer there is heteroscedasticity.
+
+```{r}
+# Read in the data
+rd <- read_csv("R&D.csv")
+
+RD <- rd$RD
+sales <- rd$SALES
+
+# Run a full model
+rd_full <- lm(sales ~ RD)
+
+# Calculate the values
+rd_residual <- residuals(rd_full)
+rd_residual_abs <- abs(rd_residual)
+rd_residual_square <- rd_residual^2
+rd_residual_square_log <- log(rd_residual_square)
+sqrt_RD <- sqrt(RD) 
+recip_RD <- 1/RD
+recip_sqrt_RD <- 1/sqrt(RD)
+RD_squared <- RD^2
+
+# Park Test
+rd_park <- lm(rd_residual_square_log ~ log(RD))
+summary(rd_park)
+
+# Glejser Test
+rd_model_g1 <- lm(rd_residual_abs ~ RD)
+summary(rd_model_g1)
+
+rd_model_g2 <- lm(rd_residual_abs ~ sqrt_RD)
+summary(rd_model_g2)
+
+rd_model_g3 <- lm(rd_residual_abs ~ recip_RD)
+summary(rd_model_g3)
+
+rd_model_g4 <- lm(rd_residual_abs ~ recip_sqrt_RD)
+summary(rd_model_g4)
+
+# White's Test
+white <- lm(rd_residual_square ~ RD + RD_squared)
+summary(white) 
+
+# Test statistic
+nrow(rd) * 0.04236 
+
+# Critical value
+qchisq(0.95, 2)
+```
+
+### Question 12
+
+Park Test Hypotheses:
+
+$H_0:\beta=0$ 
+
+$H_0:\beta\neq0$ 
+
+Informally, we can not tell whether there is heteroscedasticity problem from the residual plot. Since the p-value of park test is smaller than any reasonable significance level, we have sufficient evidence to conclude there is a heteroscedasticity problem.
+
+After doing the log transformation on sales, we still can't determine if there is heteroscedasticity problem from the residual plot. Since the p-value of park test > 0.05, we can conclude that at 95% confidence level, we can not reject $H_0$. There is no sufficient evidence to infer there is heteroscedasticity. The variances have been stabilized due to the transformation.
+
+The confidence level of sales on week 300 is (17986.28, 54473.6).
+
+```{r}
+# Read in the data
+foc <- read_csv("FOC.csv")
+
+# Informal Test
+time <- foc$TIME
+sales <- foc$SALES
+
+# Build a model
+foc_model <- lm(sales ~ time)
+foc_residual <- residuals(foc_model)
+foc_residual_square <- foc_residual^2
+foc_residual_square <- foc_residual^2
+foc_residual_square_log <- log(foc_residual_square)
+
+# Residual Plot
+plot(x = time, y = foc_residual_square)
+
+# Formal Test - Park Test
+foc_park <- lm(foc_residual_square_log ~ log(time))
+summary(foc_park)
+
+# Transform sales to log(sales)
+foc_log_model <- lm(log(sales) ~ time)
+residual_foc_log <- residuals(foc_log_model)
+residual_foc_log_square <- residual_foc_log^2
+residual_foc_log_log_square <- log(residual_foc_log_square)
+
+# Plot a residual plot
+plot(x = time, y = residual_foc_log_square)
+
+# Formal Test - Park Test
+foc_park2 <- lm(residual_foc_log_log_square ~ log(time))
+summary(foc_park2)
+
+# Predict the sales in week 300
+week_300 <- predict(foc_log_model, data.frame(time = 300), interval = "prediction")
+exp(week_300)
+```
+
+### Question 13
+
+#### Question13(a)
+
+$H_0$: All the $\alpha$ = 0
+
+$H_1$: At least one $\alpha$ is not 0
+
+Since 1.45464(test statistic) < 7.814728(critical value), we can not reject $H_0$ at 95% confidence level. There is no sufficient evidence to there is heteroscedasticity problem. Homoscedasticity is satisfied.
+
+```{r}
+# Read in the data
+woody <- read_csv("Woody.csv")
+
+# Save the values
+customer_served <- woody$Y
+competition <- woody$N
+population <- woody$P
+income <- woody$I
+
+# Build a full model
+woody_full <- lm(customer_served ~ competition + population + income)
+woody_full_residual <- residuals(woody_full)
+woody_full_residual_square <- woody_full_residual^2
+
+# BP Test
+woody_BP <- lm(woody_full_residual_square ~ competition + population + income )
+summary(woody_BP)
+
+# Test statistic
+nrow(woody) * 0.04408
+
+# Critical value
+qchisq(0.95, 3)
+```
+
+#### Question13(b)
+
+$H_0$: All the $\alpha$ = 0
+
+$H_1$: At least one $\alpha$ is not 0
+
+Since p-value of BP test is larger than any reasonable significance level, we can not reject $H_0$ at 95% confidence level. There is no sufficient evidence to there is heteroscedasticity problem. Homoscedasticity is satisfied.
+
+```{r}
+# Verification
+bptest(woody_BP)
+```
+
+#### Question13(c)
+
+$H_0$: All the $\alpha$ = 0
+
+$H_1$: At least one $\alpha$ is not 0
+
+Since 8.9628(test statistic) < 18.30704(critical value), we can not reject $H_0$ at 95% confidence level. There is no sufficient evidence to there is heteroscedasticity problem. Homoscedasticity is once again satisfied as we see in part a and b.
+
+```{r}
+# White's Test
+woody_white <- lm(woody_full_residual_square ~ competition + population + income + I(competition^2) + I(population^2) + I(income^2) + I(competition*population) + I(population*income) + I(competition*income) + I(competition*population*income))
+summary(woody_white)
+
+# Test statistic
+nrow(woody) * 0.2716
+
+# Critical value
+qchisq(0.95, 10)
+```
+
+#### Question13(d)
+
+$H_0$: All the $\alpha$ = 0
+
+$H_1$: At least one $\alpha$ is not 0
+
+Since p-value of KB test is larger than any reasonable significance level, we can not reject $H_0$ at 95% confidence level. There is no sufficient evidence to there is heteroscedasticity problem. Homoscedasticity is satisfied.The findings are consistent as (a), (b), (c) above.
+
+```{r}
+# KB Test - Obtain predicted value and its squared
+woody_pred_squared <- predict(woody_full)^2
+
+woody_KB <- lm(woody_full_residual_square ~ woody_pred_squared)
+summary(woody_KB)
+```
+
+### Question 14
+
+#### Question14(a)
+
+The equation is Median Salary = 6419.82 + 127.82 * Age
+
+```{r}
+# Read in the data
+salary <- read_csv("EconomistSalary.csv")
+
+# Median Age for each interval
+age <- c(22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72)
+Salary <- salary$`Median salary ($)`
+
+# Draw a scatterplot
+plot(age, Salary)
+
+# Build a model
+Age_Salary_model <- lm(Salary ~ age)
+summary(Age_Salary_model)
+```
+
+#### Question14(b)
+
+```{r}
+# Square Root of X
+age_sqrt <- sqrt(age)
+
+wls <- lm(Salary ~ age, weights = 1/age_sqrt)
+summary(wls)
+```
+
+#### Question14(c)
+
+```{r}
+wls2 <- lm(Salary ~ age, weights = 1/age)
+summary(wls2)
+```
+
+#### Question14(d)
+
+From the plots, we can not observe clear systematic pattern.
+
+```{r}
+# Plot the residuals
+residual_square_wls <- residuals(wls)^2
+residual_square_wls2 <- residuals(wls2)^2
+
+plot(x = age, y = residual_square_wls, main = "Part B residual")
+plot(x = age, y = residual_square_wls2, main = "Part C residual")
+```
+
+### Question 15
+
+[Independence]Durbin-Watson Test Hypotheses:
+
+$H_0$: First order autocorrelation does not exist
+
+$H_1$: First order autocorrelation does exist
+
+Since the p-value of Durbin-Watson test is smaller than any reasonable significance level, also the residual vs time plot shows an obvious pattern, there is sufficient evidence to conclude there is an autocorrelation problem with the regression.
+
+[Normality]Shapiro-Wilk Test Hypotheses:
+
+$H_0$: Data is normally distributed
+
+$H_1$: Data is not normally distributed
+
+Since the p-value of Shapiro-Wilk test is larger than any reasonable significance level, also the dots of QQ plot are pretty close to the line, we can not reject $H_0$. There is no sufficient evidence to conclude there data is not normally distributed.
+
+[Constant Variance]Spearman Rank Correlation Test Hypotheses:
+
+$H_0$: Data has constant variance
+
+$H_1$: Data doesn't have constant variance
+
+Since the p-values of Spearman Rank Correlation Test are larger than any reasonable significance level, and there is no pattern in residual plot, we can not reject $H_0$. There is no sufficient evidence to infer there is heteroscedasticity.
+
+```{r}
+# Read in the data
+ski <- read_csv("SkiSales.csv")
+
+# Save the values
+ticket <- ski$Tickets
+snow <- ski$Snowfall
+temp <- ski$Temperature
+
+# Draw a scatterplot
+plot(ski)
+
+# Build a model
+ski_model <- lm(ticket ~ snow + temp)
+summary(ski_model)
+
+# Test of Independence - Informal: Residual vs Time
+residual_ski <- residuals(ski_model)
+timeperiods <- 1:20
+plot(x=timeperiods, type="b", y=residual_ski, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Time-Sequence Plot")
+abline(h=0)
+
+# Test of Independence - Formal: Durbin-Watson Test
+lmtest::dwtest(ski_model)
+
+# Test of Normality - Informal: QQ plot
+plot(ski_model, 2)
+
+# Test of Normality - Formal: Shapiro-Wilk Test
+shapiro.test(rstandard(ski_model))
+
+# Test of Constant Variance - Informal: Residual Plot
+residual_ski_square <- residual_ski^2
+plot(ticket, residual_ski_square, main = "Residual Plot for ticket")
+plot(snow, residual_ski_square, main = "Residual Plot for snow")
+plot(temp, residual_ski_square, main = "Residual Plot for temp")
+
+# Test of Constant Variance - Formal: Spearman Rank Correlation Test
+residual_ski_abs <- abs(residual_ski)
+cor.test(x = ticket, y = residual_ski_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+cor.test(x = snow, y = residual_ski_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+cor.test(x = temp, y = residual_ski_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+```
+
+[Independence]Durbin-Watson Test Hypotheses:
+
+$H_0$: First order autocorrelation does not exist
+
+$H_1$: First order autocorrelation does exist
+
+Since the p-value of Durbin-Watson test is larger than any reasonable significance level, also the residual vs time plot shows an obvious pattern, we can not reject $H_0$. There is no sufficient evidence to conclude there is an autocorrelation problem with the regression.
+
+[Normality]Shapiro-Wilk Test Hypotheses:
+
+$H_0$: Data is normally distributed
+
+$H_1$: Data is not normally distributed
+
+Since the p-value of Shapiro-Wilk test is larger than any reasonable significance level, also the dots of QQ plot are pretty close to the line, we can not reject $H_0$. There is no sufficient evidence to conclude there data is not normally distributed.
+
+[Constant Variance]Spearman Rank Correlation Test Hypotheses:
+
+$H_0$: Data has constant variance
+
+$H_1$: Data doesn't have constant variance
+
+Since the p-values of Spearman Rank Correlation Test are larger than any reasonable significance level, and there is no pattern in residual plot, we can not reject $H_0$. There is no sufficient evidence to infer there is heteroscedasticity.
+
+By including the time variable, we remedy the autocorrelation problem.
+
+```{r}
+# Adding time variable
+ski$Time <- c(1:nrow(ski))
+time <- ski$Time
+
+# Draw a scatterplot
+plot(ski)
+
+# Build a model
+ski_model_time <- lm(ticket ~ snow + temp + time)
+summary(ski_model_time)
+
+# Test of Independence - Informal: Residual vs Time
+residual_ski_time <- residuals(ski_model_time)
+timeperiods <- 1:20
+plot(x=timeperiods, type="b", y=residual_ski_time, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Time-Sequence Plot")
+abline(h=0)
+
+# Test of Independence - Formal: Durbin-Watson Test
+lmtest::dwtest(ski_model_time)
+
+# Test of Normality - Informal: QQ plot
+plot(ski_model_time, 2)
+
+# Test of Normality - Formal: Shapiro-Wilk Test
+shapiro.test(rstandard(ski_model_time))
+
+# Test of Constant Variance - Informal: Residual Plot
+residual_ski_time_square <- residual_ski_time^2
+plot(ticket, residual_ski_time_square, main = "Residual Plot for ticket")
+plot(snow, residual_ski_time_square, main = "Residual Plot for snow")
+plot(temp, residual_ski_time_square, main = "Residual Plot for temp")
+
+# Test of Constant Variance - Formal: Spearman Rank Correlation Test
+residual_ski_time_abs <- abs(residual_ski_time)
+cor.test(x = ticket, y = residual_ski_time_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+cor.test(x = snow, y = residual_ski_time_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+cor.test(x = temp, y = residual_ski_time_abs, alternative = "two.sided", method = "spearman", exact = FALSE)
+```
+
+### Question 16
+
+#### Question16(a)
+
+Durbin-Watson Test Hypotheses:
+
+$H_0$: First order autocorrelation does not exist
+
+$H_1$: First order autocorrelation does exist
+
+Since the p-value of Durbin-Watson test is smaller than any reasonable significance level, also the residual vs time plot shows an obvious pattern, there is sufficient evidence to conclude there is an autocorrelation problem with the regression.
+
+```{r}
+# Read in the data
+compr <- read_csv("CompensationAndProductivity.csv")
+
+# Save the values
+wage <- compr$Y
+product <- compr$X
+
+# Build a model
+compr_model <- lm(wage ~ product)
+summary(compr_model)
+
+# Test of Independence - Informal: Residual vs Time
+residual_compr <- residuals(compr_model)
+timeperiod <- 1:nrow(compr)
+plot(x=timeperiod, type="b", y=residual_compr, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Time-Sequence Plot")
+abline(h=0)
+
+# Test of Independence - Formal: Durbin-Watson Test
+lmtest::dwtest(compr_model)
+```
+
+Durbin-Watson Test Hypotheses:
+
+$H_0$: First order autocorrelation does not exist
+
+$H_1$: First order autocorrelation does exist
+
+Since the p-value of Durbin-Watson test is smaller than any reasonable significance level, also the residual vs time plot shows an obvious pattern, there is sufficient evidence to conclude there is an autocorrelation problem with the regression. Adding an independent time variable doesn't change anything.
+
+```{r}
+# Add time variable
+compr$Time <- c(1:nrow(compr))
+time <- compr$Time
+
+# Build a model
+compr_model_time <- lm(wage ~ product + time)
+summary(compr_model_time)
+
+# Test of Independence - Informal: Residual vs Time
+residual_compr_time <- residuals(compr_model_time)
+timeperiod <- 1:nrow(compr)
+plot(x=timeperiod, type="b", y=residual_compr_time, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Time-Sequence Plot")
+abline(h=0)
+
+# Test of Independence - Formal: Durbin-Watson Test
+lmtest::dwtest(compr_model_time)
+
+```
+
+#### Question16(b)
+
+The equation is Wage = 0.04374 * Product + 0.93339 * Wage_Lag. The p-value for Wage_Lag is smaller than any significance level, so it's statistically significant. Also, since the p-value is smaller than any significance level, the model is valid overall.
+
+```{r}
+Wage <- wage[1:length(wage) - 1]
+Wage_lag <- wage[2:length(wage)]
+Product <- product[1:length(product) - 1]
+
+# Build a model
+lag_model <- lm(Wage ~ Product + Wage_lag)
+summary(lag_model)
+```
+
+#### Question16(c)
+
+Durbin-Watson Test Hypotheses:
+
+$H_0$: First order autocorrelation does not exist
+
+$H_1$: First order autocorrelation does exist
+
+Since the h statistic(3.072773) is greater than 2.96, at 95% confidence level, we have sufficient evidence to reject $H_0$ and conclude there is autocorrelation problem. Such result echos with what we have in part (a).
+
+```{r}
+# Durbin-Watson Test
+lmtest::dwtest(lag_model)
+
+# H statistic
+d <- 1.2745
+rho <- (1 - d / 2)
+var_beta_3 <- vcov(lag_model)[3, 3]
+n <- nrow(compr)
+
+h <- rho * sqrt(n / (1 - n * var_beta_3))
+h
+```
+
+
+### Question 17
+
+[Time to solve 48 problems]
+
+Objective: Determine if those who diet solve problem slower than those who don't.
+
+Type of Data: Interval and Ordinal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote population 1(those who diet), population 2(those who don't diet)
+
+Hypotheses:
+
+$H_0$:The two population locations are the same
+
+$H_1$: The location of population 1 is to the right of the location of population 2
+
+Decision: Perform Wilcoxon Rank Sum Test. Since the p-value of Wilcoxon Rank Sum Test is smaller than any 0.05, at 95% confidence level, we have overwhelming evidence to reject $H_0$.
+
+Interpretation: There appears to be sufficient evidence to indicate that dieting adversely affects the brain.
+
+```{r}
+# Read in the data
+diet <- read_csv("DietEffect.csv")
+
+# Save the values
+diet_yn <- as.factor(diet$`Diet?`)
+solve_time <- as.integer(diet$Time)
+letter <- diet$Letters
+word <- diet$Words
+
+# Run Wilcoxon Rank Sum Test
+wilcox.test(solve_time ~ diet_yn, alternative = "greater", paired = FALSE, exact = FALSE, conf.level = 0.95)
+
+```
+
+[Repeat String of 5 letters]
+
+Objective: Determine if diet make people not being able to repeat string of 5 letters
+
+Type of Data: Nominal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote population 1(those who diet), population 2(those who don't diet)
+
+Hypotheses:
+
+$H_0:p_1\ge p_2$
+
+$H_1:p_1 < p_2$
+
+Decision: Run Z test for p1, p2. Since the p-value of Z test is smaller than 0.05, at 95% confidence level, we have sufficient evidence to reject $H_0$ 
+
+Interpretation: There appears to be sufficient evidence to indicate that it's more difficult for those who diet to repeat string of 5 letters
+
+```{r}
+# Calculate the values
+diet_letter <- diet %>%
+  filter(`Diet?` == "1" & letter == "2")
+
+nodiet_letter <- diet %>%
+  filter(`Diet?` == "2" & letter == "2")
+
+# Run the prop test
+prop.test(c(nrow(diet_letter), nrow(nodiet_letter)), c(20, 20), alternative = "less", correct = FALSE)
+```
+
+[Repeat String of 5 words]
+
+Objective: Determine if diet make people not being able to repeat string of 5 words
+
+Type of Data: Nominal
+
+Types of Samples: Independent
+
+Definition of Populations: Denote population 1(those who diet), population 2(those who don't diet)
+
+Hypotheses:
+
+$H_0:p_1\ge p_2$
+
+$H_1:p_1 < p_2$
+
+Decision: Run Z test for p1, p2. Since the p-value of Z test is larger than 0.05. At 95% confidence level, we can not reject $H_0$
+
+Interpretation: There is no sufficient evidence to indicate that it's more difficult for those who diet to repeat string of 5 words
+
+```{r}
+# Calculate the values
+diet_word <- diet %>%
+  filter(`Diet?` == "1" & Words == "2")
+
+nodiet_word <- diet %>%
+  filter(`Diet?` == "2" & Words == "2")
+
+# Run the prop test
+prop.test(c(nrow(diet_word), nrow(nodiet_word)), c(20, 20), alternative = "less", correct = FALSE)
+```
+
+### Question 18
+
+#### Question18(a)
+
+```{r}
+# Read in the data
+consumption <- read_csv("Consumption.csv")
+
+# Save the values
+con_t <- consumption$con
+dpi <- consumption$dpi
+aaa <- consumption$aaa
+year <- consumption$year
+
+# Build the model
+con_function <- lm(con_t ~ dpi + aaa)
+summary(con_function)
+```
+
+#### Question18(b)
+
+The plot doesn't look entirely random, it may be a sign of positive autocorrelation problem.
+
+```{r}
+# Obtain residuals and its plot
+u_hat <- residuals(con_function)
+timeperiod <- c(1:62)
+plot(x=timeperiod, type="b", y=u_hat, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Line Graph against time period t")
+abline(h=0)
+```
+
+#### Question18(c)
+
+Durbin–Watson Test Hypotheses:
+
+$H_0$: Linear regression residuals of time-series data are not correlated
+
+$H_1$: Linear regression residuals of time-series data are correlated
+
+Since the p-value is smaller than any reasonable significance level, at 95% confidence level, we have overwhelming evidence to reject $H_0$. There is sufficient evidence to conclude the linear regression residuals of time-series data are correlated.
+
+```{r}
+# Run the test
+lmtest::dwtest(con_function)
+```
+
+#### Question18(d)
+
+Breusch-Godfrey Test Hypotheses:
+
+$H_0$: There is no serial correlation of first order up to present
+
+$H_1$: There is serial correlation of first order up to present
+
+Since the p-value is smaller than any reasonable significance level, at 95% confidence level, we have overwhelming evidence to reject $H_0$. There is sufficient evidence to conclude there is serial correlation of first order up to present
+
+```{r}
+# Run the test
+lmtest::bgtest(con_function, order = 1)
+```
+
+#### Question18(e)
+
+Since the coefficients are biased and the variance is greater in OLS, there are obvious differences in t-statistic and $\beta$ coefficients between OLS and GLS.
+
+```{r}
+# Calculate rho
+u_t <- u_hat[-1]
+u_t0 <- u_hat[1:length(u_hat)-1]
+
+# Build a model
+lm(u_t ~ u_t0 + 0)
+rho <- 0.8167
+
+y_star <- con_t[-1] - rho * con_t[1:length(con_t) - 1]
+x1_star <- dpi[-1] - rho * dpi[1:length(dpi) - 1]
+x2_star <- aaa[-1] - rho * aaa[1:length(aaa) - 1]
+
+# PW Transformation
+y1_star_pw <- sqrt(1 - rho^2) * head(con_t[1])
+x1_star_pw <- sqrt(1 - rho^2) * head(dpi[1])
+x2_star_pw <- sqrt(1 - rho^2) * head(aaa[1])
+
+con_star <- data.frame(y_star, x1_star, x2_star)
+con_star <- rbind(c(y1_star_pw, x1_star_pw, x2_star_pw), con_star)
+names(con_star) <- c("consumption", "dpi", "aaa")
+
+con_pw <- lm(consumption ~ dpi + aaa, data = con_star)
+summary(con_pw)
+
+# Obtain the residual and its plot
+pw_residual <- residuals(con_pw)
+plot(x=year, type="b", y=pw_residual, pch=19, 
+     xlab = "Time", ylab = "Residuals", 
+     main = "Line Graph against time period t")
+abline(h = 0)
+
+pw_residual_1 <- pw_residual[-1]
+pw_residual_0 <- pw_residual[1:length(pw_residual) - 1]
+
+plot(pw_residual_0, pw_residual_1)
+abline(h = 0, v = 0)
+```
+
+#### Question18(f)
+
+Hypotheses of Durbin-Watson Test:
+
+$H_0$: Linear regression residuals of time-series data are not correlated
+
+$H_1$: Linear regression residuals of time series data are correlated
+
+Since the p-value of Durbin-Watson Test is larger than any significance level, we can not reject $H_0$. We can conclude there is no autocorrelation problem anymore.
+
+```{r}
+lmtest::dwtest(con_pw)
+```
+
+#### Question18(g)
+
+```{r}
+# Newey-West method with a lag of 1
+newey <-  NeweyWest(con_function, lag = 1, prewhite = FALSE, adjust = TRUE)
+summary(newey)
+coeftest(con_function, df = 1, vcov = newey)
+```
+
+#### Question18(h)
+
+The coefficients of Newey-West calculation are the same as those in OLS. The difference lies in p-value. The transformed variables have smaller p-value, which means the predictability is better as well.
