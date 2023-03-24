@@ -1,0 +1,193 @@
+#' ---
+#' title: "Stats Reasoning_HW2"
+#' output: html_document
+#' date: "2022-10-13"
+#' ---
+#' 
+## ----setup, include=FALSE--------------------------------------------------------------------------------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+
+#' 
+#' ### Question1
+#' 
+#' #### Question1(a)
+#' 
+#' Based on the scatter plot, the relationship does not appear to be linear. However, the correlation between sales and display feet is pretty high, which implies there should be linear relationship between these two variables.
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Read in the data
+space <- read_csv("Display Space.csv")
+
+# Draw a scatter plot
+plot(space$`Display Feet`, space$Sales, 
+     main = "Sales versus Display Feet", 
+     xlab = "Display Feet", ylab = "Sales")
+abline(lm(space$Sales ~ space$`Display Feet`))
+
+# Check the correlation
+cor.test(space$`Display Feet`, space$Sales, 
+         alternative = "two.sided", method = "pearson")
+
+#' 
+#' #### Question1(b)
+#' 
+#' Based on the result, the linear regression equation is $Sales = 39.76\times display\space feet + 93.03$. The intercept is 93.03, this is the total sales when display feet is zero, which is meaningless. The relationship between display feet and total sales is described by the slope coefficient. For each additional display feet, the total sales increases by 39.76. This model generally makes sense, since it's intuitive to infer that more display space leads to more sales.
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Linear model
+feet <- space$`Display Feet`
+sales <- space$Sales
+lm.sales_feet <- lm(sales ~ feet)
+
+# ANOVA
+anova(lm.sales_feet)
+summary(lm.sales_feet)
+
+#' 
+#' #### Question1(c)
+#' 
+#' After performing Tukey's bulging rule, the model seems more linear, and the correlation coefficient also increases slightly. Using the new set of variables, the equation becomes $Sales=319.19\times \log_{10}display\space feet + 83.56$. The intercept is 83.56, this is the total sales when $\log_{10}display\space feet$ is zero (display space equal to 1). The relationship between $\log_{10}display\space feet$ and total sales is described by the slope coefficient. For each additional 10 feets, the total sales increases by 319.19.
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Tukey's builging rule
+log_feet <- log10(space$`Display Feet`)
+
+# Draw a scatter plot
+plot(log_feet, space$Sales,
+     main = "Sales versus Display Feet", 
+     xlab = "Display Feet", ylab = "Sales")
+abline(lm(space$Sales ~ log_feet))
+
+# Check the correlation
+cor.test(log_feet, space$Sales, 
+         alternative = "two.sided", method = "pearson")
+
+# Linear model
+lm.sales_logfeet <- lm(sales ~ log_feet)
+
+# ANOVA
+anova(lm.sales_logfeet)
+summary(lm.sales_logfeet)
+
+#' 
+#' #### Question1(d)
+#' 
+#' For the first model, the residual standard error is 51.59, R squared is 0.712, F-statistic is 111.2. As for the second model, the residual standard error is 41.31, R squared is 0.815, and F-statistic is 198.7. These arr three indicators to evaluate model accuracy, we will inspect them one by one. First, residual standard error represents the average observation points around the fitted regression line. The less is the better, so model 2 wins over model 1 from this point of view. Second, the R squared measures the proportion of information in the data that can be explained by the model (i.e how well the model fits the data). The higher the better, and model 2 wins again. Last, F-statistics gives the overall significance of the model, unsurprisingly model 2 also has higher value on this one. Based on above analysis, we can conclude that model 2 generally provides a better description of the pattern in the data.
+#' 
+#' ### Question2
+#' 
+#' #### Question2(a)
+#' 
+#' The explained variable is ROAA. The explanatory variables are efficiency ratio and total risk-based capital ratio.
+#' 
+#' ROAA = f(efficiency ratio, total risk-based ratio)
+#' 
+#' $ROAA = \beta_0 + \beta_1\times efficiency\space ratio + \beta_2\times total\space risk\space based\space capital\space ratio+\varepsilon$
+#' 
+#' #### Question2(b)
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Read in the data
+bank <- read_csv("CommunityBanks.csv")
+
+# Draw scatter plots
+pairs(bank[3:5], panel = panel.smooth)
+cor(bank[3:5])
+
+# Multiple linear regression model
+colnames(bank)[3] <- "ROAA"
+colnames(bank)[4] <- "Efficiency_Ratio"
+colnames(bank)[5] <- "Total_Risk_Based_Capital_Ratio"
+bank_model <- lm(ROAA ~ Efficiency_Ratio + Total_Risk_Based_Capital_Ratio, data = bank)
+bank_model
+
+#' 
+#' #### Question2(c)
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Global F test
+anova(bank_model)
+summary(bank_model)
+
+#' 
+#' $H_0=\beta_1=\beta_2=0$
+#' 
+#' $H_1=$At least one coefficient is non-zero
+#' 
+#' The p-value for the F-test is 1.273e-14, which is lower than any significance level.So, we can reject $H_0$, and conclude that overall model is valid.
+#' 
+#' #### Question2(d)
+#' 
+#' The confidence interval for efficiency ratio indicates that the ROAA on average falls by 1.6% to 0.7% for every 1% increase in efficiency ratio. The confidence interval for total risk-based capital ratio indicates that the ROAA on average increases by 1.7% to 3.9% for every 1% increase in total risk-based capital ratio. Since both confidence intervals do not include zero, we can infer that these two variables are significant in determining the ROAA. To conclude, we should include efficiency ratio and total risk-based capital ratio as independent variables in the model.
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+confint(bank_model, 'Efficiency_Ratio', data = bank)
+confint(bank_model, 'Total_Risk_Based_Capital_Ratio', data = bank)
+
+#' 
+#' #### Question2(e)
+#' 
+#' The intercept is 1.395. This is the ROAA when efficiency ratio and total risk-based capital ratio are both zero, which is meaningless. The relationship between ROAA and efficiency ratio is described by $\beta_1 = -0.0117$. For each % increase in efficiency ratio, ROAA decreases by 1.17%, assuming other independent variables in the model are held constant. The relationship between ROAA and total risk-based capital ratio is described by $\beta_2 = 0.0286$. For each % increase in total risk-based capital ratio, ROAA increases by 2.86%, assuming other independent variables in the model are held constant.
+#' 
+#' #### Question2(f)
+#' 
+#' The value of R squared is 0.2785. It measures the proportion of information in the data that can be explained by the model (i.e how well the model fits the data). In this case, 27.85% of variation in ROAA is explained by variation in efficiency ratio and total risk-based capital ratio. The remaining of variation is unexplained.
+#' 
+#' #### Question2(g)
+#' 
+#' The value of adjusted R squared is 0.2712.
+#' 
+#' #### Question2(h)
+#' 
+#' The confidence interval is (1.079832, 1.162896)
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+predict(bank_model, data.frame(Efficiency_Ratio = 60, Total_Risk_Based_Capital_Ratio = 15), interval = "confidence", level = 0.95)
+
+#' 
+#' #### Question2(i)
+#' 
+#' The prediction interval is (0.5678616, 1.674866)
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+predict(bank_model, data.frame(Efficiency_Ratio = 60, Total_Risk_Based_Capital_Ratio = 15), interval = "prediction", level = 0.95)
+
+#' 
+#' ### Question3
+#' 
+#' $H_0$: The reduced model(model 2) and the full model(model1) do not differ significantly, so choose the reduced model.
+#' 
+#' $H_1$: The full model is significantly better.
+#' 
+#' The p-value from the ANOVA is higher than any significance level, which can not reject $H_0$. To conclude, at 5% significance level, we should choose reduced model.$X_3, X_4$ don't have a statistically significant influence on $Y$
+#' 
+#' The MKTSHR and COMPET variables explain 2.9% of the variation in Sales that cannot be explained by ADV and BONUS alone.
+#' 
+## --------------------------------------------------------------------------------------------------------------------------------------------------------
+# Read in the data
+med <- read_csv("MedicalCo.csv")
+
+# Save the variables
+sales <- med$SALES
+x1 <- med$ADV
+x2 <- med$BONUS
+x3 <- med$MKTSHR
+x4 <- med$COMPET
+
+# Build the models
+model1 <- lm(sales ~ x1+x2+x3+x4)
+anova(model1)
+summary(model1)
+
+model2 <- lm(sales ~ x1+x2)
+anova(model2)
+summary(model2)
+
+anova(model2, model1)
+
+SSE_model2 <- 181176
+SSE_model1 <- 175855
+partial_r_squared <- (181176-175855)/181176
+partial_r_squared
+
