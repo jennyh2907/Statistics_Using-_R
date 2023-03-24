@@ -1,0 +1,119 @@
+---
+title: "Stats Reasoning_HW1"
+output: html_document
+date: "2022-10-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyr)
+```
+
+### Question 1
+
+#### Question1(a)
+
+The points seem to fall about a straight line. This normal quantile plot indicates the returned are generally normally distributed.
+
+#### Question1(b)
+
+Because it's meaningless to do that. Too many intervals will only result to the failure of rule of 5.
+
+#### Question1(c)
+
+The p-value of chi-squared goodness of fit test is 1.949635e-09, which is extremely small. So, we can reject the $H_{0}$. To conclude, we don't have sufficient evidence to infer that the data is coming from a normal distribution.
+
+```{r }
+# Observed value
+Obs_1 <- c(18, 19, 56, 128, 178, 66, 23, 16)
+
+# Expected probabilities
+exp_p_1 <- pnorm(-0.03, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_2 <- pnorm(-0.02, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(-0.03, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_3 <- pnorm(-0.01, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(-0.02, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_4 <- pnorm(0, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(-0.01, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_5 <- pnorm(0.01, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(0, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_6 <- pnorm(0.02, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(0.01, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_7 <- pnorm(0.03, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE) - pnorm(0.02, mean = 0.0009874, sd = 0.0151, lower.tail = TRUE)
+exp_p_8 <- pnorm(0.03, mean = 0.0009874, sd = 0.0151, lower.tail = FALSE)
+
+Exp_1 <- c(exp_p_1, exp_p_2, exp_p_3, exp_p_4, exp_p_5, exp_p_6, exp_p_7, exp_p_8)
+
+# Chi-square Test
+result <- chisq.test(x = Obs_1, p = Exp_1)
+
+# Adjusted p-value and correct degree of freedom
+pchisq(result$statistic, 5, lower.tail = FALSE)
+```
+
+#### Question1(d)
+
+No, the result of chi-squared test does not agree with the normal quantile plot.
+
+#### Question1(e)
+
+The normal quantile plot can present the data visually and intuitively, which is easy for us to explain. However, as it depends on subjective judgement, it's more inaccurate than formal tests. Regarding to chi-squared test, although it takes more time to perform, it produces a more accurate result and has a objective criteria to rely on. It has less possibility to be influenced by subjective opinion.
+
+### Question2
+
+#### Question2(a)
+
+The p-value is not small enough, there is no sufficient evidence to indicate that trading on some days is better or worse than any other.
+
+```{r}
+# Read in the data set
+number_of_days = c(rep("Down",41), rep("Down",42), rep("Down",39), rep("Down", 37), rep("Down", 45),
+                   rep("Up", 59),rep("Up", 55), rep("Up", 52), rep("Up",57), rep("Up",52))
+
+days_per_week = c(rep("Monday",41), rep("Tuesday",42), rep("Wednesday",39), rep("Thursday", 37), rep("Friday", 45),
+                  rep("Monday", 59),rep("Tuesday", 55), rep("Wednesday", 52), rep("Thursday",57), rep("Friday",52))
+
+dataset = data.frame(direction = number_of_days, days_of_week = days_per_week )
+
+# Chi-squared test
+chisq.test(dataset$direction, dataset$days_of_week)
+
+```
+
+#### Question2(b)
+
+The test used in (a) is a chi-squared test, and it's used to analyze relationship between two categories. However, if we want to compare the proportion positive with 0.5 for each day, we should use z-test instead of chi-squared test.
+
+#### Question2(c)
+
+With only directions, we can not determine the strength of these ups and downs in the market. That is, a slight fall and dramatic fall both count as "Down" in this case. Using such vague indicator has chance to misrepresent the real situation in the market and lead to wrong result.
+
+### Question3
+
+The p-value of chi-squared goodness of fit test is extremely small, therefore rejects $H_0$. In other words, there is at least one proportion is different from expected. We have sufficient evidence to infer that GSS2014 over-represents at least one education category.
+
+```{r}
+#cRead in the data
+GS <- read_csv("GSS2014.csv")
+
+#cNumber of each category
+num_less_high_school <- nrow(subset(GS, DEGREE == "0"))
+num_high_school <- nrow(subset(GS, DEGREE == "1"))
+num_junior_college <- nrow(subset(GS, DEGREE == "2"))
+num_bach_grad <- nrow(subset(GS, DEGREE == "3")) + nrow(subset(GS, DEGREE == "4"))
+
+#cGoodness of fit test
+Obs_3 <- c(num_less_high_school, num_high_school, num_junior_college, num_bach_grad)
+Exp_3 <- c(0.124, 0.296, 0.194, 0.386)
+
+chisq.test(x = Obs_3, p = Exp_3)
+```
+
+### Question4
+
+The p-value of chi-squared goodness of fit test is extremely small, therefore rejects $H_0$. At any reasonable $\alpha$, we can infer that immigrant's educational attainments are different from those born in the US.
+
+```{r}
+#Remove NAs
+GS%>%drop_na(BORN)
+GS%>%drop_na(DEGREE)
+
+chisq.test(GS$BORN, GS$DEGREE, correct = FALSE)
+```
+
