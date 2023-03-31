@@ -1,4 +1,4 @@
-## **About the Repo - Statistics Using R**
+## **About the Repo - Statistics_Using_R**
 
 ### **1. EDA** 
 
